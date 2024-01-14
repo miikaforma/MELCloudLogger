@@ -1,0 +1,15 @@
+# First stage: build the script
+FROM alpine as builder
+COPY melcloud-logger-x86_64-unknown-linux-musl /melcloud-logger-x86_64-unknown-linux-musl
+COPY melcloud-logger-aarch64-unknown-linux-musl /melcloud-logger-aarch64-unknown-linux-musl
+ARG TARGETARCH
+
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then export BINARY_PATH=melcloud-logger-x86_64-unknown-linux-musl; elif [ "$TARGETPLATFORM" = "linux/arm64" ]; then export BINARY_PATH=melcloud-logger-aarch64-unknown-linux-musl; else export BINARY_PATH=melcloud-logger-x86_64-unknown-linux-musl; fi \
+    && mv ./${BINARY_PATH} ./melcloud-logger
+
+# Second stage: create the final image
+FROM scratch
+COPY --from=builder /melcloud-logger /melcloud-logger
+
+USER 1000
+CMD ["./melcloud-logger"]
